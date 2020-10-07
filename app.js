@@ -13,6 +13,7 @@ app.use(cors())
 app.set('views', path.join(__dirname, 'src/views'))
 app.set('view engine', 'ejs')
 const { findAll } = require('./src/models/users')
+const { insertChat, getChat } = require('./src/models/chats')
 
 
 
@@ -35,16 +36,27 @@ io.on('connection', (socket) => {
   socket.on('join-room', (payload) => {
     socket.join(payload)
   })
-  // socket.on('make-private-room', (payload) => {
-  //   socket.join(payload)
-  //   console.log(payload)
-  // })
   socket.on('send-message', (payload) => {
     const room = payload.room
-    io.to(room).emit('private-message', {
+    insertChat({
       sender: payload.username,
-      msg: payload.textChat,
-      receiver: room
+      receiver: room,
+      message: payload.textChat
+    }).then(() => {
+      io.to(room).emit('private-message', {
+        sender: payload.username,
+        msg: payload.textChat,
+        receiver: room
+      })
+    }).catch(err => {
+      console.log(err)
+    })
+  })
+  socket.on('get-history-message', (payload) => {
+    getChat(payload).then(result => {
+      io.to(payload.sender).emit('history-message', result)
+    }).catch(err => {
+      console.log(err)
     })
   })
 })

@@ -149,6 +149,7 @@ const users = {
                         iduser: userData.iduser,
                         username: userData.username,
                         fullname: userData.fullname,
+                        image: userData.image,
                         token: token,
                         refreshToken: userRefreshToken
                       }
