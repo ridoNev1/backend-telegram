@@ -1,4 +1,5 @@
 const db = require('../config/db')
+const fs = require('fs')
 
 const users = {
   register: (data) => {
@@ -132,6 +133,51 @@ const users = {
             resolve(result)
           }
         })
+    })
+  },
+  updatedata: (data, id) => {
+    return new Promise((resolve, reject) => {
+      db.query(`UPDATE users SET ? WHERE iduser = ?`, [data, id], (err, res) => {
+        if(err) {
+            reject(new Error(err));
+        }else {
+            resolve(res);
+        }
+      })
+    })
+  },
+  getDetail: (iduser) => {
+    return new Promise((resolve, reject) => {
+      db.query(`SELECT * from users WHERE iduser = ${iduser}`, (err, result) => {
+        if(err) {
+          reject(new Error(err));
+        }else {
+            resolve(result);
+        }
+      })
+    })
+  },
+  updateImage:(data, iduser) => {
+    return new Promise((resolve, reject) => {
+      db.query(`SELECT * from users WHERE iduser = ${iduser}`, (err, result) => {
+        if(err) {
+          reject(new Error(err));
+        }else {
+          resolve(new Promise((resolve, reject) => {
+            fs.unlink(`src/uploads/${result[0].image}`, (err) => {
+              if(err) throw err;
+              console.log('Update data success');
+            })
+            db.query(`UPDATE users SET ? WHERE iduser = ?`, [data, iduser], (err, resget) => {
+              if(err) {
+                reject(new Error(err))
+              } else {
+                resolve(resget)
+              }
+            })
+          }));
+        }
+      })
     })
   }
 }

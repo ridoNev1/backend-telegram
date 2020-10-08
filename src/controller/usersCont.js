@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt')
 const jwt = require('jsonwebtoken')
 const mailer = require('nodemailer')
 const { JWT_KEY, emaill, passwordd, url, urlforgot } = require('../helpers/env')
+const upload = require('../helpers/upload')
 
 const users = {
   register: async (req, res) => {
@@ -308,8 +309,46 @@ const users = {
     } catch (error) {
       failed(res, [], `Internal Server Error`)
     }
+  },
+  updateDetail: (req, res) => {
+    const iduser = req.params.iduser;
+    const data = req.body
+    usersModel.updatedata(data, iduser)
+      .then(result => {
+        success(res, result, 'Update data success');
+      }).catch(err => {
+        failed(res, [], err.message);
+      })
+  },
+  getDetail: (req, res) => {
+    const iduser = req.params.iduser;
+    usersModel.getDetail(iduser)
+      .then(result => {
+        success(res, result, 'get data success');
+      }).catch(err => {
+        failed(res, [], err.message);
+      })
+  },
+  updateImage: (req, res) => {
+    upload.single('image')(req, res, (err) => {
+      if (err) {
+        if(err.message === "File too large") {
+          failed(res, [], 'Ukuran File terlalu besar')
+        }
+        failed(res, [], err);
+      } else {
+        const iduser = req.params.iduser
+        const data = req.body
+        data.image = !req.file ? '' : req.file.filename
+        usersModel.updateImage(data, iduser)
+          .then(result => {
+            success(res, result, 'Update data success');
+          }).catch(err => {
+            failed(res, [], err.message);
+          })
+      }
+    })
   }
-
 }
 
 module.exports = users
