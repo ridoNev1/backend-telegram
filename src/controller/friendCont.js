@@ -36,5 +36,19 @@ module.exports = {
       }).catch(err => {
         failed(res, [], err.message)
       })
+  },
+  updateNewNotif: (req, res) => {
+    const body = req.body
+    const iduser = body.id_users
+    const idfriend = body.id_friends
+    const data = {
+      msg_notif: 0 
+    }
+    friendModel.updateNotif(data, iduser, idfriend)
+      .then(response => {
+        success(res, response, 'set new message done !')
+      }).catch(err => {
+        failed(res, [], err.message)
+      })
   }
 }

@@ -16,7 +16,6 @@ const { findAll } = require('./src/models/users')
 const { insertChat, getChat } = require('./src/models/chats')
 const friendsRoute = require('./src/routes/friendsRoute')
 const friendModel = require('./src/models/friend')
-const { response } = require('express')
 const { success } = require('./src/helpers/response')
 
 
@@ -72,17 +71,35 @@ io.on('connection', (socket) => {
       console.log(err)
     })
   })
+  // notif
   socket.on('set-msgnotif', (payload) => {
     const sender = parseInt(payload.idsender)
     const receiver = payload.idreceiver
+    const newChats = payload.newmessage
     friendModel.getNotif(receiver, sender).then(result => {
       const notif = {
-        msg_notif: result[0].msg_notif + 1
+        msg_notif: result[0].msg_notif + 1,
+        newchats: newChats
       }
-      friendModel.updateNotif(notif, receiver, sender)
+
+      friendModel.updateNotif(notif, receiver, sender).then(() => {
+        io.to(receiver).emit('notif-response', {
+          sender: sender,
+          message: newChats
+        })
+      })
+      // set new chats
+      const newMsg = {
+        newchats: newChats
+      }
+      friendModel.updateNotif(newMsg, sender, receiver)
+
     }).catch(err => {
       console.log(err)
     })
+  })
+  socket.on('join-room-notif', (payload) => {
+    socket.join(payload)
   })
 })
 

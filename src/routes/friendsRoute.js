@@ -6,5 +6,6 @@ route
   .post('/insert', friendsCont.insertFriend)
   .get('/find/:id', friendsCont.getFriends)
   .delete('/delete/:id', friendsCont.deleteFriend)
+  .patch('/updatenotif', friendsCont.updateNewNotif)
 
 module.exports = route
