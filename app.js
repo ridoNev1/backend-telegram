@@ -14,7 +14,10 @@ app.set('views', path.join(__dirname, 'src/views'))
 app.set('view engine', 'ejs')
 const { findAll } = require('./src/models/users')
 const { insertChat, getChat } = require('./src/models/chats')
-
+const friendsRoute = require('./src/routes/friendsRoute')
+const friendModel = require('./src/models/friend')
+const { response } = require('express')
+const { success } = require('./src/helpers/response')
 
 
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -22,6 +25,7 @@ app.use(bodyParser.json())
 
 app.use(express.static('src/uploads'))
 app.use('/users', usersRouter)
+app.use('/friends', friendsRoute)
 
 
 io.on('connection', (socket) => {
@@ -29,6 +33,13 @@ io.on('connection', (socket) => {
   socket.on('get-all-users', (payload) => {
     findAll().then(result => {
       io.emit('data-users', result)
+    }).catch(err => {
+      console.log(err)
+    })
+  })
+  socket.on('get-friends', (payload) => {
+    friendModel.getFriend(payload).then(result => {
+      io.emit('list-friends', result)
     }).catch(err => {
       console.log(err)
     })
@@ -41,12 +52,14 @@ io.on('connection', (socket) => {
     insertChat({
       sender: payload.username,
       receiver: room,
-      message: payload.textChat
+      message: payload.textChat,
+      type: payload.type
     }).then(() => {
       io.to(room).emit('private-message', {
         sender: payload.username,
         msg: payload.textChat,
-        receiver: room
+        receiver: room,
+        type: payload.type
       })
     }).catch(err => {
       console.log(err)
@@ -55,6 +68,18 @@ io.on('connection', (socket) => {
   socket.on('get-history-message', (payload) => {
     getChat(payload).then(result => {
       io.to(payload.sender).emit('history-message', result)
+    }).catch(err => {
+      console.log(err)
+    })
+  })
+  socket.on('set-msgnotif', (payload) => {
+    const sender = parseInt(payload.idsender)
+    const receiver = payload.idreceiver
+    friendModel.getNotif(receiver, sender).then(result => {
+      const notif = {
+        msg_notif: result[0].msg_notif + 1
+      }
+      friendModel.updateNotif(notif, receiver, sender)
     }).catch(err => {
       console.log(err)
     })

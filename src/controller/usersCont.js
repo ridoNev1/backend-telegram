@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken')
 const mailer = require('nodemailer')
 const { JWT_KEY, emaill, passwordd, url, urlforgot } = require('../helpers/env')
 const upload = require('../helpers/upload')
+const fs = require('fs')
 
 const users = {
   register: async (req, res) => {
@@ -335,16 +336,41 @@ const users = {
         if(err.message === "File too large") {
           failed(res, [], 'Ukuran File terlalu besar')
         }
-        failed(res, [], err);
       } else {
         const iduser = req.params.iduser
         const data = req.body
         data.image = !req.file ? '' : req.file.filename
-        usersModel.updateImage(data, iduser)
+        usersModel.getDetail(iduser)
           .then(result => {
-            success(res, result, 'Update data success');
-          }).catch(err => {
-            failed(res, [], err.message);
+            const oldImage = result[0].image
+            if(data.image !== oldImage) {
+              if(oldImage !== '404.png') {
+                usersModel.updateImage(data, iduser)
+                  .then(result => {
+                    success(res, result, 'Update data success');
+                    fs.unlink(`src/uploads/${oldImage}`, (err) => {
+                      if(err) throw err;
+                      console.log('update success')
+                    })
+                  }).catch(err => {
+                    failed(res, [], err.message);
+                  })
+              } else {
+                usersModel.updateImage(data, iduser)
+                  .then(result => {
+                    success(res, result, 'Update data success');
+                  }).catch(err => {
+                    failed(res, [], err.message);
+                  })
+              }
+            } else {
+              usersModel.updateImage(data, iduser)
+                .then(result => {
+                  success(res, result, 'Update data success');
+                }).catch(err => {
+                  failed(res, [], err.message);
+                })
+            }
           })
       }
     })
