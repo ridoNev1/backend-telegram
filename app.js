@@ -17,6 +17,7 @@ const { insertChat, getChat } = require('./src/models/chats')
 const friendsRoute = require('./src/routes/friendsRoute')
 const friendModel = require('./src/models/friend')
 const { success } = require('./src/helpers/response')
+const userModel = require('./src/models/users')
 
 
 app.use(bodyParser.urlencoded({ extended: false }))
@@ -28,7 +29,30 @@ app.use('/friends', friendsRoute)
 
 
 io.on('connection', (socket) => {
-  console.log('connect')
+
+  socket.on('set-status', (payload) => {
+    const dataOnline = {
+      statuson: 'Online'
+    }
+    userModel.updatedata(dataOnline, payload)
+
+    socket.broadcast.emit('status-on', {
+      message: `users ${payload} online`,
+      onlineid: payload
+    })
+  })
+  // disconnect 
+  socket.on('on-dc', (payload) => {
+    const dataOffline = {
+      statuson: 'Offline'
+    }
+    userModel.updatedata(dataOffline, payload)
+    socket.broadcast.emit('status', {
+      message: `user ${payload} offline`,
+      offlineid: payload
+    })
+  })
+
   socket.on('get-all-users', (payload) => {
     findAll().then(result => {
       io.emit('data-users', result)
@@ -102,6 +126,7 @@ io.on('connection', (socket) => {
     socket.join(payload)
   })
 })
+
 
 server.listen(PORT, () => {
   console.log(`running on port ${PORT}`)

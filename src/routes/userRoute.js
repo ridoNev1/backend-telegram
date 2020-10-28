@@ -29,4 +29,5 @@ router
     .patch('/updatedata/:iduser', usersController.updateDetail)
     .get('/getdetail/:iduser', usersController.getDetail)
     .patch('/updateimage/:iduser', usersController.updateImage)
+    .get('/getallusers', usersController.findUserAll)
 module.exports = router;

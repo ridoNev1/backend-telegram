@@ -374,6 +374,15 @@ const users = {
           })
       }
     })
+  },
+  findUserAll: (req, res) => {
+    const name = !req.query.name ? '' : req.query.name
+    usersModel.findAll(name)
+      .then(result => {
+        success(res, result, 'get user success')
+      }).catch(err => {
+        failed(res, [], 'failed get data users')
+      })
   }
 }
 
